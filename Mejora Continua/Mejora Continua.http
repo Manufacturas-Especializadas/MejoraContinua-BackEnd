@@ -1,0 +1,6 @@
+@Mejora_Continua_HostAddress = http://localhost:5243
+
+GET {{Mejora_Continua_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
