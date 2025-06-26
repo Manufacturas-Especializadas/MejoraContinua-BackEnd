@@ -88,3 +88,4 @@ C:\Users\innovacion\Pictures\Mejora Continua - BackEnd\Mejora Continua\Mejora Co
 C:\Users\innovacion\Pictures\Mejora Continua - BackEnd\Mejora Continua\Mejora Continua\bin\Debug\net8.0\RBush.dll
 C:\Users\innovacion\Pictures\Mejora Continua - BackEnd\Mejora Continua\Mejora Continua\bin\Debug\net8.0\SixLabors.Fonts.dll
 C:\Users\innovacion\Pictures\Mejora Continua - BackEnd\Mejora Continua\Mejora Continua\bin\Debug\net8.0\System.IO.Packaging.dll
+C:\Users\innovacion\Pictures\Mejora Continua - BackEnd\Mejora Continua\Mejora Continua\obj\Debug\net8.0\Mejora Continua.sourcelink.json

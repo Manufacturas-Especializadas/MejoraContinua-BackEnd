@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Mejora Continua")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e052484b1e3b763f0942dc690214d7e0fa294159")]
 [assembly: System.Reflection.AssemblyProductAttribute("Mejora Continua")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Mejora Continua")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
