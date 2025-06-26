@@ -29,10 +29,10 @@ namespace Mejora_Continua.Controllers
 
             if(ideId == null)
             {
-                return NotFound(StatusCode(StatusCodes.Status404NotFound, new { message = "Id no encontrado" }));
+                return NotFound(new { message = "Id no encontrado" });
             }
 
-            return Ok(StatusCode(StatusCodes.Status200OK, ideId));
+            return Ok(ideId);
         }
 
         [HttpGet("GetListIdeas")]
@@ -64,35 +64,20 @@ namespace Mejora_Continua.Controllers
         [HttpGet("GetListStatus")]
         public async Task<List<ContinuousImprovementStatus>> GetListStatusAsync()
         {
-            var list = await _context.ContinuousImprovementStatus
-                                .AsNoTracking()
-                                .ToListAsync();
+            return await _context.ContinuousImprovementStatus.AsNoTracking().ToListAsync();
 
-            if(list == null)
-            {
-                throw new Exception("No hay datos disponibles");
-            }
-
-            return list;
-                                
         }
 
         [HttpGet("GetListChampions")]
         public async Task<List<ChampionDTO>> GetListChampionsAsync()
         {
             var list = await _context.ContinuousImprovementChampions
-                                        .AsNoTracking()
-                                        .Select(x => new ChampionDTO
-                                        {
-                                            Id = x.Id,
-                                            Name = x.Name,
-                                        })
-                                        .ToListAsync();
+            .AsNoTracking()
+            .Select(x => new ChampionDTO { Id = x.Id, Name = x.Name })
+            .ToListAsync();
 
-            if( list == null || !list.Any())
-            {
+            if (!list.Any())
                 throw new Exception("No hay datos disponibles");
-            }
 
             return list;
         }
@@ -296,7 +281,7 @@ namespace Mejora_Continua.Controllers
             _context.ContinuousImprovementIdeas.Remove(ideaDb);
             await _context.SaveChangesAsync();
 
-            return StatusCode(StatusCodes.Status200OK, new { message = "Registro eliminado" });
+            return Ok(new { message = "Registro eliminado" });
         }
     }
 }
