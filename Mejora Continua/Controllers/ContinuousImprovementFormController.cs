@@ -236,7 +236,7 @@ namespace Mejora_Continua.Controllers
 
         private async Task SendChampionAssignedEmail(ContinuousImprovementChampions champion, ContinuousImprovementIdeas idea)
         {
-            var subject = $"Se te ha asignado una nueva idea de - { idea.FullName } ";
+            var subject = "Se te ha asignado una nueva idea";
 
             var body = $@"
                     <h2> Hola {champion.Name} </h2>
@@ -244,7 +244,7 @@ namespace Mejora_Continua.Controllers
                     <ul>
                         <li><strong>Nombre:</strong>{idea.FullName}</li>
                         <li><strong>Situación actual:</strong>{idea.CurrentSituation}</li>
-                        <li><strong>Descripción:</strong>{idea.IdeaDescription}</li>
+                        <li><strong>Descripción de la idea:</strong>{idea.IdeaDescription}</li>
                     </ul>
                     <p>Favor de atenderla lo más pronto posible</p>
                     <br/>
