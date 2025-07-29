@@ -50,6 +50,7 @@ namespace Mejora_Continua.Controllers
                                 status = i.Status.Name,
                                 championNames = i.Champion.Select(c => c.Name).ToList(),
                             })
+                            .OrderByDescending(i => i.Id)
                             .AsNoTracking()
                             .ToListAsync();
 
@@ -284,4 +285,5 @@ namespace Mejora_Continua.Controllers
             return Ok(new { message = "Registro eliminado" });
         }
     }
+
 }
