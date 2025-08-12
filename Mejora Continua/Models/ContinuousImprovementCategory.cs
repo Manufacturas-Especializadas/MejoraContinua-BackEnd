@@ -11,5 +11,5 @@ public partial class ContinuousImprovementCategory
 
     public string Name { get; set; }
 
-    public virtual ICollection<ContinuousImprovementIdeas> Idea { get; set; } = new List<ContinuousImprovementIdeas>();
+    public virtual ICollection<IdeaCategory> IdeaCategory { get; set; } = new List<IdeaCategory>();
 }

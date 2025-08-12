@@ -21,6 +21,10 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<ContinuousImprovementStatus> ContinuousImprovementStatus { get; set; }
 
+    public virtual DbSet<IdeaCategory> IdeaCategory { get; set; }
+
+    public virtual DbSet<IdeaChampion> IdeaChampion { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<ContinuousImprovementCategory>(entity =>
@@ -77,34 +81,6 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.StatusId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK__Continuou__statu__6754599E");
-
-            entity.HasMany(d => d.Category).WithMany(p => p.Idea)
-                .UsingEntity<Dictionary<string, object>>(
-                    "IdeaCategory",
-                    r => r.HasOne<ContinuousImprovementCategory>().WithMany()
-                        .HasForeignKey("CategoryId")
-                        .HasConstraintName("FK__IdeaCateg__Categ__6B24EA82"),
-                    l => l.HasOne<ContinuousImprovementIdeas>().WithMany()
-                        .HasForeignKey("IdeaId")
-                        .HasConstraintName("FK__IdeaCateg__IdeaI__6A30C649"),
-                    j =>
-                    {
-                        j.HasKey("IdeaId", "CategoryId").HasName("PK__IdeaCate__5FB111A31C78975E");
-                    });
-
-            entity.HasMany(d => d.Champion).WithMany(p => p.Idea)
-                .UsingEntity<Dictionary<string, object>>(
-                    "IdeaChampion",
-                    r => r.HasOne<ContinuousImprovementChampions>().WithMany()
-                        .HasForeignKey("ChampionId")
-                        .HasConstraintName("FK__IdeaChamp__Champ__6EF57B66"),
-                    l => l.HasOne<ContinuousImprovementIdeas>().WithMany()
-                        .HasForeignKey("IdeaId")
-                        .HasConstraintName("FK__IdeaChamp__IdeaI__6E01572D"),
-                    j =>
-                    {
-                        j.HasKey("IdeaId", "ChampionId").HasName("PK__IdeaCham__DCE0CD312423FAF3");
-                    });
         });
 
         modelBuilder.Entity<ContinuousImprovementStatus>(entity =>
@@ -115,6 +91,32 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<IdeaCategory>(entity =>
+        {
+            entity.HasKey(e => new { e.IdeaId, e.CategoryId }).HasName("PK__IdeaCate__5FB111A31C78975E");
+
+            entity.HasOne(d => d.Category).WithMany(p => p.IdeaCategory)
+                .HasForeignKey(d => d.CategoryId)
+                .HasConstraintName("FK__IdeaCateg__Categ__6B24EA82");
+
+            entity.HasOne(d => d.Idea).WithMany(p => p.IdeaCategory)
+                .HasForeignKey(d => d.IdeaId)
+                .HasConstraintName("FK__IdeaCateg__IdeaI__6A30C649");
+        });
+
+        modelBuilder.Entity<IdeaChampion>(entity =>
+        {
+            entity.HasKey(e => new { e.IdeaId, e.ChampionId }).HasName("PK__IdeaCham__DCE0CD312423FAF3");
+
+            entity.HasOne(d => d.Champion).WithMany(p => p.IdeaChampion)
+                .HasForeignKey(d => d.ChampionId)
+                .HasConstraintName("FK__IdeaChamp__Champ__6EF57B66");
+
+            entity.HasOne(d => d.Idea).WithMany(p => p.IdeaChampion)
+                .HasForeignKey(d => d.IdeaId)
+                .HasConstraintName("FK__IdeaChamp__IdeaI__6E01572D");
         });
 
         OnModelCreatingPartial(modelBuilder);

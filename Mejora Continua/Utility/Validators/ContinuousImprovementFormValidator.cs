@@ -19,10 +19,10 @@ namespace Mejora_Continua.Utility.Validators
             RuleFor(x => x.IdeaDescription)
                 .NotEmpty().WithMessage("La idea de mejora es obligatoria");
 
-            RuleFor(x => x.CategoryIds)
-                .NotNull().WithMessage("Debe seleccionar al menos una categoría")
-                .Must(catogories => catogories != null && catogories.Count > 0)
-                .WithMessage("Debe seleccionar al menos una cattegoría");
+            //RuleFor(x => x.CategoryIds)
+            //    .NotNull().WithMessage("Debe seleccionar al menos una categoría")
+            //    .Must(catogories => catogories != null && catogories.Count > 0)
+            //    .WithMessage("Debe seleccionar al menos una cattegoría");
         }
     }
 }

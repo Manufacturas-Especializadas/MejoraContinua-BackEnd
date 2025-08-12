@@ -38,28 +38,47 @@ namespace Mejora_Continua.Controllers
         [HttpGet("GetListIdeas")]
         public async Task<IActionResult> GetListIdeasAsync()
         {
-            var list = await _context.ContinuousImprovementIdeas
-                            .Select(i => new
-                            {
-                                i.Id,
-                                i.FullName,
-                                i.WorkArea,
-                                i.RegistrationDate,
-                                i.CurrentSituation,
-                                i.IdeaDescription,
-                                status = i.Status.Name,
-                                championNames = i.Champion.Select(c => c.Name).ToList(),
-                            })
-                            .OrderByDescending(i => i.Id)
-                            .AsNoTracking()
-                            .ToListAsync();
-
-            if (list == null)
+            try
             {
-                throw new Exception("No hay datos disponibles");
-            }
+                var list = await _context.ContinuousImprovementIdeas
+                    .OrderByDescending(i => i.Id)
+                    .Select(i => new
+                    {
+                        i.Id,
+                        i.FullName,
+                        i.WorkArea,
+                        i.RegistrationDate,
+                        i.CurrentSituation,
+                        i.IdeaDescription,
+                        Status = i.Status != null ? i.Status.Name : "Sin estado",
+                        ChampionNames = _context.IdeaChampion
+                            .Where(ic => ic.IdeaId == i.Id)
+                            .Select(ic => ic.Champion != null ? ic.Champion.Name : "")
+                            .ToList(),
+                        Categories = _context.IdeaCategory
+                            .Where(ic => ic.IdeaId == i.Id)
+                            .Select(ic => ic.Category != null ? ic.Category.Name : "")
+                            .ToList()
+                    })
+                    .AsNoTracking()
+                    .ToListAsync();
 
-            return Ok(list);
+                if (list == null || !list.Any())
+                {
+                    return NotFound(new { message = "No hay ideas registradas" });
+                }
+
+                return Ok(list);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "Error al obtener la lista de ideas",
+                    error = ex.Message,
+                    stackTrace = ex.StackTrace
+                });
+            }
         }
 
         [HttpGet("GetListStatus")]
@@ -86,94 +105,160 @@ namespace Mejora_Continua.Controllers
         [HttpPost("DownloadExcel")]
         public async Task<IActionResult> ExportToExcel()
         {
-            var idea = await _context.ContinuousImprovementIdeas.Select(i => new
-            {
-                i.Id,
-                i.FullName,
-                i.WorkArea,
-                i.RegistrationDate,
-                i.CurrentSituation,
-                i.IdeaDescription,
-                status = i.Status.Name,
-                championNames = i.Champion.Select(c => c.Name).ToList(),
-            })
-            .AsNoTracking()
-            .ToListAsync();
+            var ideas = await _context.ContinuousImprovementIdeas
+                .Include(i => i.Status)
+                .Include(i => i.IdeaChampion)
+                    .ThenInclude(ic => ic.Champion)
+                .Select(i => new
+                {
+                    i.Id,
+                    i.FullName,
+                    i.WorkArea,
+                    i.RegistrationDate,
+                    i.CurrentSituation,
+                    i.IdeaDescription,
+                    StatusName = i.Status.Name,
+                    ChampionNames = i.IdeaChampion.Select(ic => ic.Champion.Name).ToList()
+                })
+                .AsNoTracking()
+                .ToListAsync();
 
             using (var workBook = new XLWorkbook())
             {
                 var workSheet = workBook.Worksheets.Add("ContinuousImprovementIdeas");
 
-                workSheet.Cell(1, 1).Value = "Nombre completo";
-                workSheet.Cell(1, 2).Value = "Area de trabajo";
-                workSheet.Cell(1, 3).Value = "Situacion";
-                workSheet.Cell(1, 4).Value = "Descripcion";
-                workSheet.Cell(1, 5).Value = "Estado";
-                workSheet.Cell(1, 6).Value = "Fecha de registro";
-                workSheet.Cell(1, 7).Value = "Champion(s)";
+                workSheet.Cell(1, 1).Value = "ID";
+                workSheet.Cell(1, 2).Value = "Nombre completo";
+                workSheet.Cell(1, 3).Value = "Área de trabajo";
+                workSheet.Cell(1, 4).Value = "Situación actual";
+                workSheet.Cell(1, 5).Value = "Descripción de la idea";
+                workSheet.Cell(1, 6).Value = "Estado";
+                workSheet.Cell(1, 7).Value = "Fecha de registro";
+                workSheet.Cell(1, 8).Value = "Champion(s)";
 
-                for(int i = 0; i < idea.Count; i++)
+                for (int i = 0; i < ideas.Count; i++)
                 {
-                    workSheet.Cell(i + 2, 1).Value = idea[i].FullName;
-                    workSheet.Cell(i + 2, 2).Value = idea[i].WorkArea;
-                    workSheet.Cell(i + 2, 3).Value = idea[i].CurrentSituation;
-                    workSheet.Cell(i + 2, 4).Value = idea[i].IdeaDescription;
-                    workSheet.Cell(i + 2, 5).Value = idea[i].status;
-                    workSheet.Cell(i + 2, 6).Value = idea[i].RegistrationDate!.Value.ToString("dd/MM/yyyy");
-                    workSheet.Cell(i + 2, 7).Value = string.Join(", ", idea[i].championNames);
+                    var current = ideas[i];
+                    workSheet.Cell(i + 2, 1).Value = current.Id;
+                    workSheet.Cell(i + 2, 2).Value = current.FullName;
+                    workSheet.Cell(i + 2, 3).Value = current.WorkArea;
+                    workSheet.Cell(i + 2, 4).Value = current.CurrentSituation;
+                    workSheet.Cell(i + 2, 5).Value = current.IdeaDescription;
+                    workSheet.Cell(i + 2, 6).Value = current.StatusName;
+                    workSheet.Cell(i + 2, 7).Value = current.RegistrationDate?.ToString("dd/MM/yyyy");
+                    workSheet.Cell(i + 2, 8).Value = string.Join(", ", current.ChampionNames);
                 }
+
+                workSheet.Columns().AdjustToContents();
 
                 var stream = new MemoryStream();
                 workBook.SaveAs(stream);
                 stream.Position = 0;
 
-                var filName = $"DatosExportados_{DateTime.Now:ddMMyyyy}.xlsx";
+                var fileName = $"IdeasMejoraContinua_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
-                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filName);
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
         }
 
 
         [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] ContinuousImprovementIdeas improvementIdea)
+        public async Task<IActionResult> Register([FromBody] ContinuousImprovementIdeasDTO ideaDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             try
             {
-                if (string.IsNullOrEmpty(improvementIdea.FullName))
+                // Validar que el status exista
+                if (!await _context.ContinuousImprovementStatus.AnyAsync(s => s.Id == ideaDto.StatusId))
                 {
-                    improvementIdea.FullName = string.Join(", ", improvementIdea.Names ?? new List<string>());
+                    return BadRequest("El estado especificado no existe");
                 }
 
-                _context.ContinuousImprovementIdeas.Add(improvementIdea);
-                await _context.SaveChangesAsync();
-
-                var categoryList = await _context.ContinuousImprovementCategory
-                    .Where(c => improvementIdea.CategoryIds.Contains(c.Id))
+                // Validar que las categorías existan
+                var existingCategoryIds = await _context.ContinuousImprovementCategory
+                    .Where(c => ideaDto.CategoryIds.Contains(c.Id))
+                    .Select(c => c.Id)
                     .ToListAsync();
 
-                foreach (var categoryId in improvementIdea.CategoryIds)
+                var invalidCategoryIds = ideaDto.CategoryIds.Except(existingCategoryIds).ToList();
+                if (invalidCategoryIds.Any())
                 {
-                    var category = categoryList.FirstOrDefault(c => c.Id == categoryId);
-                    if (category != null)
+                    return BadRequest($"Las siguientes categorías no existen: {string.Join(", ", invalidCategoryIds)}");
+                }
+
+                // Validar champions si se proporcionan
+                if (ideaDto.ChampionIds != null && ideaDto.ChampionIds.Any())
+                {
+                    var existingChampionIds = await _context.ContinuousImprovementChampions
+                        .Where(c => ideaDto.ChampionIds.Contains(c.Id))
+                        .Select(c => c.Id)
+                        .ToListAsync();
+
+                    var invalidChampionIds = ideaDto.ChampionIds.Except(existingChampionIds).ToList();
+                    if (invalidChampionIds.Any())
                     {
-                        improvementIdea.Category.Add(category);
+                        return BadRequest($"Los siguientes champions no existen: {string.Join(", ", invalidChampionIds)}");
+                    }
+                }
+
+                // Crear la nueva idea
+                var idea = new ContinuousImprovementIdeas
+                {
+                    FullName = string.IsNullOrEmpty(ideaDto.FullName) ?
+                             string.Join(", ", ideaDto.Names ?? new List<string>()) :
+                             ideaDto.FullName,
+                    WorkArea = ideaDto.WorkArea,
+                    CurrentSituation = ideaDto.CurrentSituation,
+                    IdeaDescription = ideaDto.IdeaDescription,
+                    StatusId = ideaDto.StatusId,
+                    RegistrationDate = ideaDto.RegistrationDate ?? DateTime.Now
+                };
+
+                _context.ContinuousImprovementIdeas.Add(idea);
+                await _context.SaveChangesAsync(); // Guardar primero para obtener el ID
+
+                // Agregar relaciones con categorías (muchos a muchos)
+                foreach (var categoryId in ideaDto.CategoryIds)
+                {
+                    _context.IdeaCategory.Add(new IdeaCategory
+                    {
+                        IdeaId = idea.Id,
+                        CategoryId = categoryId
+                    });
+                }
+
+                // Agregar relaciones con champions (muchos a muchos)
+                if (ideaDto.ChampionIds != null)
+                {
+                    foreach (var championId in ideaDto.ChampionIds)
+                    {
+                        _context.IdeaChampion.Add(new IdeaChampion
+                        {
+                            IdeaId = idea.Id,
+                            ChampionId = championId
+                        });
                     }
                 }
 
                 await _context.SaveChangesAsync();
 
-                return Ok(new { message = "Registro exitoso" });
+                return Ok(new
+                {
+                    message = "Registro exitoso",
+                    ideaId = idea.Id,
+                    selectedCategories = ideaDto.CategoryIds.Count,
+                    selectedChampions = ideaDto.ChampionIds?.Count ?? 0
+                });
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
-                    message = $"Error interno del servidor: {ex.Message}",
-                    innerException = ex.InnerException?.Message,
-                    stackTrace = ex.StackTrace
+                    message = "Error al registrar la idea",
+                    error = ex.Message,
+                    innerException = ex.InnerException?.Message
                 });
             }
         }

@@ -2,7 +2,6 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Mejora_Continua.Models;
 
@@ -18,19 +17,13 @@ public partial class ContinuousImprovementIdeas
 
     public string IdeaDescription { get; set; }
 
-    public int StatusId { get; set; }
-
     public DateTime? RegistrationDate { get; set; }
 
-    [NotMapped]
-    public List<int> CategoryIds { get; set; } = new List<int>();
+    public int? StatusId { get; set; }
 
-    [NotMapped]
-    public List<string> Names { get; set; } = new List<string>();
+    public virtual ICollection<IdeaCategory> IdeaCategory { get; set; } = new List<IdeaCategory>();
+
+    public virtual ICollection<IdeaChampion> IdeaChampion { get; set; } = new List<IdeaChampion>();
 
     public virtual ContinuousImprovementStatus Status { get; set; }
-
-    public virtual ICollection<ContinuousImprovementCategory> Category { get; set; } = new List<ContinuousImprovementCategory>();
-
-    public virtual ICollection<ContinuousImprovementChampions> Champion { get; set; } = new List<ContinuousImprovementChampions>();
 }
