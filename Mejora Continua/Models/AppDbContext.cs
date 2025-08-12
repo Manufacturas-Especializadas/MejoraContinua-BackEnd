@@ -25,75 +25,71 @@ public partial class AppDbContext : DbContext
     {
         modelBuilder.Entity<ContinuousImprovementCategory>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("pk_StatusCategory");
+            entity.HasKey(e => e.Id).HasName("PK__Continuo__3214EC076B9225B8");
 
             entity.Property(e => e.Name)
-                .HasMaxLength(40)
+                .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("name");
         });
 
         modelBuilder.Entity<ContinuousImprovementChampions>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("pk_Champions");
+            entity.HasKey(e => e.Id).HasName("PK__Continuo__3214EC070DAFB353");
 
             entity.Property(e => e.Email)
-                .HasMaxLength(100)
+                .HasMaxLength(80)
                 .IsUnicode(false)
                 .HasColumnName("email");
             entity.Property(e => e.Name)
-                .HasMaxLength(50)
+                .HasMaxLength(70)
                 .IsUnicode(false)
                 .HasColumnName("name");
         });
 
         modelBuilder.Entity<ContinuousImprovementIdeas>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("pk_ContinuousImprovementIdeas");
+            entity.HasKey(e => e.Id).HasName("PK__Continuo__3214EC07ECEE4DD4");
 
             entity.Property(e => e.CurrentSituation)
-                .HasMaxLength(255)
+                .HasMaxLength(500)
                 .IsUnicode(false)
                 .HasColumnName("currentSituation");
             entity.Property(e => e.FullName)
-                .HasMaxLength(70)
+                .HasMaxLength(300)
                 .IsUnicode(false)
                 .HasColumnName("fullName");
             entity.Property(e => e.IdeaDescription)
-                .HasMaxLength(255)
+                .HasMaxLength(500)
                 .IsUnicode(false)
                 .HasColumnName("ideaDescription");
             entity.Property(e => e.RegistrationDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("registrationDate");
-            entity.Property(e => e.StatusId)
-                .HasDefaultValue(1)
-                .HasColumnName("statusId");
+            entity.Property(e => e.StatusId).HasColumnName("statusId");
             entity.Property(e => e.WorkArea)
-                .HasMaxLength(50)
+                .HasMaxLength(150)
                 .IsUnicode(false)
                 .HasColumnName("workArea");
 
             entity.HasOne(d => d.Status).WithMany(p => p.ContinuousImprovementIdeas)
                 .HasForeignKey(d => d.StatusId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_ContinuousImprovementIdeasStatus");
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK__Continuou__statu__6754599E");
 
             entity.HasMany(d => d.Category).WithMany(p => p.Idea)
                 .UsingEntity<Dictionary<string, object>>(
                     "IdeaCategory",
                     r => r.HasOne<ContinuousImprovementCategory>().WithMany()
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__IdeaCateg__Categ__498EEC8D"),
+                        .HasConstraintName("FK__IdeaCateg__Categ__6B24EA82"),
                     l => l.HasOne<ContinuousImprovementIdeas>().WithMany()
                         .HasForeignKey("IdeaId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__IdeaCateg__IdeaI__489AC854"),
+                        .HasConstraintName("FK__IdeaCateg__IdeaI__6A30C649"),
                     j =>
                     {
-                        j.HasKey("IdeaId", "CategoryId").HasName("PK__IdeaCate__5FB111A3AB1E8DA1");
+                        j.HasKey("IdeaId", "CategoryId").HasName("PK__IdeaCate__5FB111A31C78975E");
                     });
 
             entity.HasMany(d => d.Champion).WithMany(p => p.Idea)
@@ -101,21 +97,19 @@ public partial class AppDbContext : DbContext
                     "IdeaChampion",
                     r => r.HasOne<ContinuousImprovementChampions>().WithMany()
                         .HasForeignKey("ChampionId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__IdeaChamp__Champ__4D5F7D71"),
+                        .HasConstraintName("FK__IdeaChamp__Champ__6EF57B66"),
                     l => l.HasOne<ContinuousImprovementIdeas>().WithMany()
                         .HasForeignKey("IdeaId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__IdeaChamp__IdeaI__4C6B5938"),
+                        .HasConstraintName("FK__IdeaChamp__IdeaI__6E01572D"),
                     j =>
                     {
-                        j.HasKey("IdeaId", "ChampionId").HasName("PK__IdeaCham__DCE0CD3131D199EB");
+                        j.HasKey("IdeaId", "ChampionId").HasName("PK__IdeaCham__DCE0CD312423FAF3");
                     });
         });
 
         modelBuilder.Entity<ContinuousImprovementStatus>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("pk_StatusContinuous");
+            entity.HasKey(e => e.Id).HasName("PK__Continuo__3214EC079125E0D3");
 
             entity.Property(e => e.Name)
                 .HasMaxLength(50)
