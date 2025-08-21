@@ -361,5 +361,4 @@ namespace Mejora_Continua.Controllers
             return Ok(new { message = "Registro eliminado" });
         }
     }
-
 }
