@@ -279,25 +279,22 @@ namespace Mejora_Continua.Controllers
                         continue;
                     }
 
-                    var exists = await _context.Set<Dictionary<string, object>>("IdeaChampion")
-                        .AnyAsync(e =>
-                            (int)e["IdeaId"] == dto.IdeaId &&
-                            (int)e["ChampionId"] == dto.ChampionId
-                        );
+                    var exists = await _context.IdeaChampion
+                            .AnyAsync(e => e.IdeaId == dto.IdeaId && e.ChampionId == dto.ChampionId);
 
-                    if(!exists)
+                    if (!exists)
                     {
-                        var entry = new Dictionary<string, object>
+                        var ideaChampion = new IdeaChampion
                         {
-                            ["IdeaId"] = dto.IdeaId,
-                            ["ChampionId"] = dto.ChampionId
+                            IdeaId = dto.IdeaId,
+                            ChampionId = dto.ChampionId
                         };
 
-                        await _context.Set<Dictionary<string, object>>("IdeaChampion").AddAsync(entry);
+                        await _context.IdeaChampion.AddAsync(ideaChampion);
                     }
 
                     await SendChampionAssignedEmail(champion, idea);
-                }
+                }   
 
                 await _context.SaveChangesAsync();
 
