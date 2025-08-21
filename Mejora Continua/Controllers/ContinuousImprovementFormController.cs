@@ -170,13 +170,11 @@ namespace Mejora_Continua.Controllers
 
             try
             {
-                // Validar que el status exista
                 if (!await _context.ContinuousImprovementStatus.AnyAsync(s => s.Id == ideaDto.StatusId))
                 {
                     return BadRequest("El estado especificado no existe");
                 }
 
-                // Validar que las categorías existan
                 var existingCategoryIds = await _context.ContinuousImprovementCategory
                     .Where(c => ideaDto.CategoryIds.Contains(c.Id))
                     .Select(c => c.Id)
@@ -188,7 +186,6 @@ namespace Mejora_Continua.Controllers
                     return BadRequest($"Las siguientes categorías no existen: {string.Join(", ", invalidCategoryIds)}");
                 }
 
-                // Validar champions si se proporcionan
                 if (ideaDto.ChampionIds != null && ideaDto.ChampionIds.Any())
                 {
                     var existingChampionIds = await _context.ContinuousImprovementChampions
@@ -203,7 +200,6 @@ namespace Mejora_Continua.Controllers
                     }
                 }
 
-                // Crear la nueva idea
                 var idea = new ContinuousImprovementIdeas
                 {
                     FullName = string.IsNullOrEmpty(ideaDto.FullName) ?
@@ -217,9 +213,8 @@ namespace Mejora_Continua.Controllers
                 };
 
                 _context.ContinuousImprovementIdeas.Add(idea);
-                await _context.SaveChangesAsync(); // Guardar primero para obtener el ID
+                await _context.SaveChangesAsync();
 
-                // Agregar relaciones con categorías (muchos a muchos)
                 foreach (var categoryId in ideaDto.CategoryIds)
                 {
                     _context.IdeaCategory.Add(new IdeaCategory
@@ -229,7 +224,6 @@ namespace Mejora_Continua.Controllers
                     });
                 }
 
-                // Agregar relaciones con champions (muchos a muchos)
                 if (ideaDto.ChampionIds != null)
                 {
                     foreach (var championId in ideaDto.ChampionIds)
