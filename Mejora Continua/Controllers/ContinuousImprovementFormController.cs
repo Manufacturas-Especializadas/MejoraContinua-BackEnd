@@ -41,6 +41,7 @@ namespace Mejora_Continua.Controllers
             try
             {
                 var list = await _context.ContinuousImprovementIdeas
+                    .Where(i => i.Status != null)
                     .OrderByDescending(i => i.Id)
                     .Select(i => new
                     {
@@ -50,7 +51,8 @@ namespace Mejora_Continua.Controllers
                         i.RegistrationDate,
                         i.CurrentSituation,
                         i.IdeaDescription,
-                        Status = i.Status != null ? i.Status.Name : "Sin estado",
+                        Status = i.Status.Name,
+                        Year = i.RegistrationDate!.Value.Year,
                         ChampionNames = _context.IdeaChampion
                             .Where(ic => ic.IdeaId == i.Id)
                             .Select(ic => ic.Champion != null ? ic.Champion.Name : "")
