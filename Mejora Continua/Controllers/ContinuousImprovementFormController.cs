@@ -16,6 +16,8 @@ namespace Mejora_Continua.Controllers
         private AppDbContext _context;
         private readonly EmailService _emailService;
 
+        private const string AdminEmail = "jose.lugo@mesa.ms";
+
         public ContinuousImprovementFormController(AppDbContext context, EmailService emailService)
         {
             _context = context;
@@ -285,6 +287,8 @@ namespace Mejora_Continua.Controllers
 
                 await _context.SaveChangesAsync();
 
+                await SendNewIdeaRegisteredEmail(idea);
+
                 return Ok(new
                 {
                     message = "Registro exitoso",
@@ -357,27 +361,7 @@ namespace Mejora_Continua.Controllers
                 });
             }
         }
-
-        private async Task SendChampionAssignedEmail(ContinuousImprovementChampions champion, ContinuousImprovementIdeas idea)
-        {
-            var subject = "Se te ha asignado una nueva idea";
-
-            var body = $@"
-                    <h2> Hola {champion.Name} </h2>
-                    <p> Se te ha asignado una nueva idea </p>
-                    <ul>
-                        <li><strong>Nombre:</strong>{idea.FullName}</li>
-                        <li><strong>Situación actual:</strong>{idea.CurrentSituation}</li>
-                        <li><strong>Descripción de la idea:</strong>{idea.IdeaDescription}</li>
-                    </ul>
-                    <p>Favor de atenderla lo más pronto posible</p>
-                    <br/>
-                    <p>Saludos, <br/>Equipo de Mejora Continua</p>
-                ";
-
-            await _emailService.SendEmailAsync(champion.Email, subject, body);
-        }
-
+       
         [HttpPut("Update/{id:int}")]
         public async Task<IActionResult> Update([FromBody] ContinuousImprovementIdeasDTO ideasDTO, int id)
         {
@@ -407,5 +391,105 @@ namespace Mejora_Continua.Controllers
 
             return Ok(new { message = "Registro eliminado" });
         }
+
+        private async Task SendChampionAssignedEmail(ContinuousImprovementChampions champion, ContinuousImprovementIdeas idea)
+        {
+            var subject = $"Asignación: Nueva Idea de Mejora #{idea.Id}";
+
+            var body = $@"
+                <div style='font-family: Arial, sans-serif; color: #333;'>
+                    <table width='100%' cellpadding='0' cellspacing='0' style='max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 5px;'>
+                        <tr>
+                            <td style='background-color: #0078D4; padding: 20px; text-align: center; color: white; border-top-left-radius: 5px; border-top-right-radius: 5px;'>
+                                <h2 style='margin: 0;'>Nueva Asignación de Idea</h2>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 20px;'>
+                                <p>Hola <strong>{champion.Name}</strong>,</p>
+                                <p>Se te ha asignado el seguimiento de una nueva idea de mejora continua. A continuación los detalles:</p>
+                                
+                                <table width='100%' cellpadding='10' cellspacing='0' style='background-color: #f9f9f9; border-radius: 5px; margin-top: 10px;'>
+                                    <tr>
+                                        <td width='30%' style='font-weight: bold; border-bottom: 1px solid #ddd;'>ID:</td>
+                                        <td style='border-bottom: 1px solid #ddd;'>#{idea.Id}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='font-weight: bold; border-bottom: 1px solid #ddd;'>Colaborador:</td>
+                                        <td style='border-bottom: 1px solid #ddd;'>{idea.FullName}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='font-weight: bold; border-bottom: 1px solid #ddd;'>Situación Actual:</td>
+                                        <td style='border-bottom: 1px solid #ddd;'>{idea.CurrentSituation}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='font-weight: bold;'>Propuesta:</td>
+                                        <td>{idea.IdeaDescription}</td>
+                                    </tr>
+                                </table>
+
+                                <p style='margin-top: 20px;'>Por favor, ingresa al sistema para dar seguimiento.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style='background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px;'>
+                                &copy; {DateTime.Now.Year} Equipo de Mejora Continua
+                            </td>
+                        </tr>
+                    </table>
+                </div>";
+
+            await _emailService.SendEmailAsync(champion.Email, subject, body);
+        }
+
+        private async Task SendNewIdeaRegisteredEmail(ContinuousImprovementIdeas idea)
+        {
+            var subject = $"Nueva Idea Registrada en el Sistema - Folio #{idea.Id}";
+
+            var body = $@"
+                <div style='font-family: Arial, sans-serif; color: #333;'>
+                    <table width='100%' cellpadding='0' cellspacing='0' style='max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 5px;'>
+                        <tr>
+                            <td style='background-color: #28a745; padding: 20px; text-align: center; color: white; border-top-left-radius: 5px; border-top-right-radius: 5px;'>
+                                <h2 style='margin: 0;'>¡Nueva Idea Registrada!</h2>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 20px;'>
+                                <p>El sistema ha recibido una nueva propuesta de mejora.</p>
+                                
+                                <table width='100%' cellpadding='10' cellspacing='0' style='background-color: #f9f9f9; border-radius: 5px; margin-top: 10px;'>
+                                    <tr>
+                                        <td width='30%' style='font-weight: bold; border-bottom: 1px solid #ddd;'>Folio:</td>
+                                        <td style='border-bottom: 1px solid #ddd;'>#{idea.Id}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='font-weight: bold; border-bottom: 1px solid #ddd;'>Área:</td>
+                                        <td style='border-bottom: 1px solid #ddd;'>{idea.WorkArea}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='font-weight: bold; border-bottom: 1px solid #ddd;'>Registrado por:</td>
+                                        <td style='border-bottom: 1px solid #ddd;'>{idea.FullName}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='font-weight: bold;'>Descripción breve:</td>
+                                        <td>{idea.IdeaDescription}</td>
+                                    </tr>
+                                </table>
+
+                                <p style='margin-top: 20px;'>Es necesario asignar Champions y revisar la viabilidad de la idea.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style='background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px;'>
+                                Notificación automática del Sistema de Mejora Continua
+                            </td>
+                        </tr>
+                    </table>
+                </div>";
+           
+            await _emailService.SendEmailAsync(AdminEmail, subject, body);
+        }
+
     }
 }
