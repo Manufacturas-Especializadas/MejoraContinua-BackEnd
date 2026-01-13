@@ -105,59 +105,104 @@ namespace Mejora_Continua.Controllers
         }
 
         [HttpPost("DownloadExcel")]
-        public async Task<IActionResult> ExportToExcel()
+        public async Task<IActionResult> ExportToExcel([FromQuery] int year)
         {
-            var ideas = await _context.ContinuousImprovementIdeas
-                .Include(i => i.Status)
-                .Include(i => i.IdeaChampion)
-                    .ThenInclude(ic => ic.Champion)
-                .Select(i => new
-                {
-                    i.Id,
-                    i.FullName,
-                    i.WorkArea,
-                    i.RegistrationDate,
-                    i.CurrentSituation,
-                    i.IdeaDescription,
-                    StatusName = i.Status.Name,
-                    ChampionNames = i.IdeaChampion.Select(ic => ic.Champion.Name).ToList()
-                })
-                .AsNoTracking()
-                .ToListAsync();
+            var ideasQuery = _context.ContinuousImprovementIdeas
+                            .Include(i => i.Status)
+                            .Include(i => i.IdeaChampion)
+                                .ThenInclude(ic => ic.Champion)
+                            .AsQueryable();
+
+            if(year > 0)
+            {
+                ideasQuery = ideasQuery.Where(i => i.RegistrationDate.HasValue && i.RegistrationDate.Value.Year == year);
+            }
+
+            var ideas = await ideasQuery
+                        .Select(i => new
+                        {
+                            i.Id,
+                            i.FullName,
+                            i.WorkArea,
+                            i.RegistrationDate,
+                            i.CurrentSituation,
+                            i.IdeaDescription,
+                            StatusName = i.Status.Name,
+                            Champions = i.IdeaChampion.Select(ic => ic.Champion.Name).ToList(),
+                            Categorys = i.IdeaCategory.Select(ica => ica.Category.Name).ToList(),
+                        })
+                        .AsNoTracking()
+                        .ToListAsync();
 
             using (var workBook = new XLWorkbook())
             {
-                var workSheet = workBook.Worksheets.Add("ContinuousImprovementIdeas");
+                var workSheet = workBook.Worksheets.Add($"Reporte {year}");
 
-                workSheet.Cell(1, 1).Value = "ID";
-                workSheet.Cell(1, 2).Value = "Nombre completo";
-                workSheet.Cell(1, 3).Value = "Área de trabajo";
-                workSheet.Cell(1, 4).Value = "Situación actual";
-                workSheet.Cell(1, 5).Value = "Descripción de la idea";
-                workSheet.Cell(1, 6).Value = "Estado";
-                workSheet.Cell(1, 7).Value = "Fecha de registro";
-                workSheet.Cell(1, 8).Value = "Champion(s)";
+                var headerColor = XLColor.FromHtml("#0284c7");
+                var whiteColor = XLColor.White;
 
-                for (int i = 0; i < ideas.Count; i++)
+                workSheet.Cell(1, 1).Value = $"REPORTE DE IDEAS DE MEJORA - AÑO {year}";
+                workSheet.Range(1, 1, 1, 9).Merge();
+                workSheet.Cell(1, 1).Style.Font.FontSize = 14;
+                workSheet.Cell(1, 1).Style.Font.Bold = true;
+                workSheet.Cell(1, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                workSheet.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.LightGray;
+
+                int headerRowIndex = 2;
+
+                workSheet.Cell(headerRowIndex, 1).Value = "ID";
+                workSheet.Cell(headerRowIndex, 2).Value = "Nombre completo";
+                workSheet.Cell(headerRowIndex, 3).Value = "Área";
+                workSheet.Cell(headerRowIndex, 4).Value = "Situación actual";
+                workSheet.Cell(headerRowIndex, 5).Value = "Descripción";
+                workSheet.Cell(headerRowIndex, 6).Value = "Estatus";
+                workSheet.Cell(headerRowIndex, 7).Value = "Fecha de registro";
+                workSheet.Cell(headerRowIndex, 8).Value = "Champions";
+                workSheet.Cell(headerRowIndex, 9).Value = "Categorías";
+
+                var headerRange = workSheet.Range(headerRowIndex, 1, headerRowIndex, 9);
+                headerRange.Style.Fill.BackgroundColor = headerColor;
+                headerRange.Style.Font.FontColor = whiteColor;
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                int datRowIndex = 3;
+                for(int i = 0; i < ideas.Count; i++)
                 {
                     var current = ideas[i];
-                    workSheet.Cell(i + 2, 1).Value = current.Id;
-                    workSheet.Cell(i + 2, 2).Value = current.FullName;
-                    workSheet.Cell(i + 2, 3).Value = current.WorkArea;
-                    workSheet.Cell(i + 2, 4).Value = current.CurrentSituation;
-                    workSheet.Cell(i + 2, 5).Value = current.IdeaDescription;
-                    workSheet.Cell(i + 2, 6).Value = current.StatusName;
-                    workSheet.Cell(i + 2, 7).Value = current.RegistrationDate?.ToString("dd/MM/yyyy");
-                    workSheet.Cell(i + 2, 8).Value = string.Join(", ", current.ChampionNames);
+                    int currentRow = datRowIndex + i;
+
+                    workSheet.Cell(currentRow, 1).Value = current.Id;
+                    workSheet.Cell(currentRow, 2).Value = current.FullName;
+                    workSheet.Cell(currentRow, 3).Value = current.WorkArea;
+                    workSheet.Cell(currentRow, 4).Value = current.CurrentSituation;
+                    workSheet.Cell(currentRow, 5).Value = current.IdeaDescription;
+
+                    var statusCell = workSheet.Cell(currentRow, 6);
+                    statusCell.Value = current.StatusName;
+                    if (current.StatusName == "Aprobada") statusCell.Style.Font.FontColor = XLColor.Green;
+
+                    workSheet.Cell(currentRow, 7).Value = current.RegistrationDate?.ToString("dd/MM/yyyy");
+                    workSheet.Cell(currentRow, 8).Value = string.Join(", ", current.Champions);
+                    workSheet.Cell(currentRow, 9).Value = string.Join(", ", current.Categorys);
                 }
 
                 workSheet.Columns().AdjustToContents();
+
+                workSheet.Column(4).Width = 40;
+                workSheet.Column(5).Width = 50;
+                workSheet.Column(4).Style.Alignment.WrapText = true;
+                workSheet.Column(5).Style.Alignment.WrapText = true;
+
+                var tableRange = workSheet.Range(headerRowIndex, 1, datRowIndex + ideas.Count - 1, 9);
+                tableRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                tableRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
                 var stream = new MemoryStream();
                 workBook.SaveAs(stream);
                 stream.Position = 0;
 
-                var fileName = $"IdeasMejoraContinua_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                var fileName = $"IdeasMejora_{year}_{DateTime.Now:ddMMyyyy}";
 
                 return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
