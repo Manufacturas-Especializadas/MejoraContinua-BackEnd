@@ -16,7 +16,7 @@ namespace Mejora_Continua.Controllers
         private AppDbContext _context;
         private readonly EmailService _emailService;
 
-        private const string AdminEmail = "jose.lugo@mesa.ms";
+        private const string AdminEmail = "anahi.sauceda@mesa.ms";
 
         public ContinuousImprovementFormController(AppDbContext context, EmailService emailService)
         {
