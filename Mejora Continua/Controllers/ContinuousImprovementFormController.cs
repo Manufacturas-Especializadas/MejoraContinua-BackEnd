@@ -490,6 +490,5 @@ namespace Mejora_Continua.Controllers
            
             await _emailService.SendEmailAsync(AdminEmail, subject, body);
         }
-
     }
 }
