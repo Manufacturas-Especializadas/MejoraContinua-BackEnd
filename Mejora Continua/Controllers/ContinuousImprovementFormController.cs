@@ -107,7 +107,7 @@ namespace Mejora_Continua.Controllers
         }
 
         [HttpPost("DownloadExcel")]
-        public async Task<IActionResult> ExportToExcel([FromQuery] int year)
+        public async Task<IActionResult> ExportToExcel([FromQuery] int year, [FromQuery] int month = 0)
         {
             var ideasQuery = _context.ContinuousImprovementIdeas
                             .Include(i => i.Status)
@@ -118,6 +118,11 @@ namespace Mejora_Continua.Controllers
             if(year > 0)
             {
                 ideasQuery = ideasQuery.Where(i => i.RegistrationDate.HasValue && i.RegistrationDate.Value.Year == year);
+            }
+
+            if(month >= 1 && month <= 12)
+            {
+                ideasQuery = ideasQuery.Where(i => i.RegistrationDate.HasValue && i.RegistrationDate.Value.Month == month);
             }
 
             var ideas = await ideasQuery
@@ -138,12 +143,13 @@ namespace Mejora_Continua.Controllers
 
             using (var workBook = new XLWorkbook())
             {
-                var workSheet = workBook.Worksheets.Add($"Reporte {year}");
+                string monthName = month > 0 ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month) : "Anual";
+                var workSheet = workBook.Worksheets.Add($"Reporte {monthName} {year}");
 
                 var headerColor = XLColor.FromHtml("#0284c7");
                 var whiteColor = XLColor.White;
 
-                workSheet.Cell(1, 1).Value = $"REPORTE DE IDEAS DE MEJORA - AÑO {year}";
+                workSheet.Cell(1, 1).Value = $"REPORTE DE IDEAS - {monthName.ToUpper()} {year}";
                 workSheet.Range(1, 1, 1, 9).Merge();
                 workSheet.Cell(1, 1).Style.Font.FontSize = 14;
                 workSheet.Cell(1, 1).Style.Font.Bold = true;
